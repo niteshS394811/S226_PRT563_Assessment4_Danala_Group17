@@ -1,0 +1,23 @@
+productId,productName,barcode,unitPrice,categoryId
+1,Full Cream Milk 2L,9312345000011,4.5,5
+2,Free Range Eggs 12pk,9312345000028,6.8,5
+3,Rolled Oats 1kg,9312345000035,3.2,1
+4,Sourdough Loaf,9312345000042,5.5,6
+5,Bananas (per kg),9312345000059,3.9,3
+6,Mangoes (per kg),9312345000066,8.5,3
+7,Carrots 1kg,9312345000073,2.6,4
+8,Broccoli (each),9312345000080,3.1,4
+9,Mineral Water 1.5L,9312345000097,2.2,7
+10,Orange Juice 2L,9312345000103,4.8,7
+11,Dishwashing Liquid 1L,9312345000110,3.5,9
+12,Laundry Powder 2kg,9312345000127,12.0,9
+13,Toothpaste 100g,9312345000134,4.2,10
+14,Shampoo 400ml,9312345000141,7.9,10
+15,White Bread 700g,9312345000158,2.8,6
+16,Greek Yoghurt 1kg,9312345000165,6.5,5
+17,Apples Pink Lady 1kg,9312345000172,4.9,3
+18,Potatoes 2kg,9312345000189,3.8,4
+19,Soft Drink Cola 1.25L,9312345000196,2.5,7
+20,Toilet Paper 12pk,9312345000202,8.9,9
+21,Avocado (each),9312345000219,2.4,3
+22,Cheddar Cheese 500g,9312345000226,7.2,5

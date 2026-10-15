@@ -1,0 +1,9 @@
+purchaseOrderId,orderDate,expectedDeliveryDate,status,supplierId,storeId
+1,2026-08-01,2026-08-05,Received,1,1
+2,2026-08-03,2026-08-07,Received,2,2
+3,2026-08-10,2026-08-14,Received,3,3
+4,2026-08-12,2026-08-16,Partial,1,1
+5,2026-08-15,2026-08-19,Pending,4,2
+6,2026-08-18,2026-08-22,Received,2,3
+7,2026-08-20,2026-08-24,Pending,5,1
+8,2026-08-22,2026-08-26,Received,3,2

@@ -1,0 +1,11 @@
+customerId,firstName,lastName,email,phone,joinDate
+1,Liam,Foster,liam.foster@email.com,0412 345 678,2023-05-10
+2,Mia,Chen,mia.chen@email.com,0423 456 789,2024-01-15
+3,Noah,Patel,noah.p@email.com,0434 567 890,2022-11-20
+4,Olivia,Nguyen,olivia.n@email.com,0445 678 901,2023-08-05
+5,Ethan,Singh,,0456 789 012,2024-03-12
+6,Ava,Williams,ava.w@email.com,0467 890 123,2023-02-28
+7,Lucas,Brown,lucas.b@email.com,,2024-05-01
+8,Sophia,Martin,sophia.m@email.com,0489 012 345,2022-09-18
+9,Mason,Taylor,mason.t@email.com,0490 123 456,2023-12-01
+10,Isabella,Lee,,0401 234 567,2024-06-20

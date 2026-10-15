@@ -1,0 +1,179 @@
+// ==========================================================================
+// PRT563 Assessment 4 – Danala Group 17
+// Darwin Multi-Store Supermarket – Cypher Queries + Multi-Algorithm GDS
+// File: queries.txt
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// USE CASE 1 – SIMPLE (Promotion candidates)
+// Business scenario: Identify fruit and vegetable products priced under $5.00
+// for a mid-week promotion at Casuarina, Palmerston and Nightcliff stores.
+// --------------------------------------------------------------------------
+MATCH (p:Product)-[:IN_CATEGORY]->(c:ProductCategory)
+WHERE c.categoryName IN ['Fruit', 'Vegetables']
+  AND p.unitPrice < 5.00
+RETURN p.productName AS Product,
+       p.unitPrice AS Price,
+       c.categoryName AS Category
+ORDER BY p.unitPrice;
+
+
+// --------------------------------------------------------------------------
+// USE CASE 2 – SIMPLE / LABEL FILTER (Loyalty engagement)
+// Business scenario: Identify Bronze and Silver loyalty members with fewer
+// than 1,000 points so a points-boost campaign can be targeted before the
+// wet season.
+// --------------------------------------------------------------------------
+MATCH (c:Customer:LoyaltyMember)
+WHERE c.tierLevel IN ['Bronze', 'Silver']
+  AND c.pointsBalance < 1000
+RETURN c.customerId AS CustomerID,
+       c.firstName + ' ' + c.lastName AS Name,
+       c.tierLevel AS Tier,
+       c.pointsBalance AS Points
+ORDER BY c.pointsBalance;
+
+
+// --------------------------------------------------------------------------
+// USE CASE 3 – MODERATELY COMPLEX (Low stock + recent demand)
+// Business scenario: List products below reorder level at any store and show
+// how many units were sold in the last 7 days. Supports emergency inter-store
+// transfer decisions when the Stuart Highway is disrupted.
+// --------------------------------------------------------------------------
+MATCH (s:Store)-[h:HOLDS]->(p:Product)
+WHERE h.quantityOnHand < h.reorderLevel
+OPTIONAL MATCH (st:SalesTransaction)-[i:INCLUDES]->(p)
+WHERE st.saleDateTime >= datetime() - duration({days: 7})
+WITH s, p, h, sum(i.quantitySold) AS recentSales
+RETURN s.storeName AS Store,
+       p.productName AS Product,
+       h.quantityOnHand AS OnHand,
+       h.reorderLevel AS ReorderLevel,
+       coalesce(recentSales, 0) AS UnitsSoldLast7Days
+ORDER BY h.quantityOnHand ASC;
+
+
+// --------------------------------------------------------------------------
+// USE CASE 4 – COMPLEX (Supplier prioritisation for low-stock items)
+// Business scenario: Rank suppliers by total ordered value of products that
+// are currently below reorder level, so purchasing can prioritise reliable
+// suppliers during wet-season risk periods.
+// --------------------------------------------------------------------------
+MATCH (s:Store)-[h:HOLDS]->(p:Product)
+WHERE h.quantityOnHand < h.reorderLevel
+MATCH (po:PurchaseOrder)-[c:CONTAINS]->(p)
+MATCH (po)-[:SUPPLIED_BY]->(sup:Supplier)
+WITH sup, p, sum(c.quantityOrdered * c.unitCost) AS orderedValue
+RETURN sup.supplierName AS Supplier,
+       p.productName AS LowStockProduct,
+       round(orderedValue, 2) AS TotalOrderedValue
+ORDER BY orderedValue DESC;
+
+
+// ==========================================================================
+// GRAPH DATA SCIENCE – CENTRALITY ALGORITHMS 
+// Business question: Which products act as "hubs" in customer baskets?
+// High-centrality products should be prioritised for continuous availability
+// during wet-season supply disruptions in the Northern Territory.
+// ==========================================================================
+
+// ----- Project the co-purchase graph (once) -----
+CALL gds.graph.project(
+  'coPurchase',
+  'Product',
+  {
+    CO_PURCHASED: {
+      orientation: 'UNDIRECTED',
+      properties: 'weight'
+    }
+  }
+);
+
+// ----- 1. PageRank (weighted) -----
+CALL gds.pageRank.stream('coPurchase', {
+  relationshipWeightProperty: 'weight',
+  maxIterations: 20,
+  dampingFactor: 0.85
+})
+YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).productName AS Product,
+       round(score, 4) AS PageRank
+ORDER BY score DESC
+LIMIT 10;
+
+
+
+// ----- 2. Degree Centrality (weighted) -----
+CALL gds.degree.stream('coPurchase', {
+  relationshipWeightProperty: 'weight'
+})
+YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).productName AS Product,
+       round(score, 2) AS WeightedDegree
+ORDER BY score DESC
+LIMIT 10;
+
+
+// ----- 3. Betweenness Centrality -----
+// Identifies products that sit on many shortest paths between other products
+// (critical "bridge" items in baskets).
+CALL gds.betweenness.stream('coPurchase')
+YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).productName AS Product,
+       round(score, 4) AS Betweenness
+ORDER BY score DESC
+LIMIT 10;
+
+
+// ==========================================================================
+// GRAPH DATA SCIENCE – SIMILARITY ALGORITHMS 
+// Business question: Which products share similar purchase patterns?
+// Supports "customers who bought X also bought Y" and substitute suggestions
+// when a SKU is out of stock.
+// ==========================================================================
+
+// ----- Project bipartite Product–SalesTransaction graph -----
+CALL gds.graph.project(
+  'productBasket',
+  ['Product', 'SalesTransaction'],
+  {
+    INCLUDES: {
+      orientation: 'UNDIRECTED'
+    }
+  }
+);
+
+// ----- 1. Node Similarity – Jaccard -----
+CALL gds.nodeSimilarity.stream('productBasket', {
+  similarityMetric: 'JACCARD',
+  topK: 5
+})
+YIELD node1, node2, similarity
+WHERE gds.util.asNode(node1):Product AND gds.util.asNode(node2):Product
+RETURN gds.util.asNode(node1).productName AS Product1,
+       gds.util.asNode(node2).productName AS Product2,
+       round(similarity, 3) AS JaccardSimilarity
+ORDER BY similarity DESC
+LIMIT 15;
+
+
+// ----- 2. Node Similarity – Cosine (second similarity algorithm) -----
+CALL gds.nodeSimilarity.stream('productBasket', {
+  similarityMetric: 'COSINE',
+  topK: 5
+})
+YIELD node1, node2, similarity
+WHERE gds.util.asNode(node1):Product AND gds.util.asNode(node2):Product
+RETURN gds.util.asNode(node1).productName AS Product1,
+       gds.util.asNode(node2).productName AS Product2,
+       round(similarity, 3) AS CosineSimilarity
+ORDER BY similarity DESC
+LIMIT 15;
+
+
+
+// --------------------------------------------------------------------------
+// CLEAN-UP 
+// --------------------------------------------------------------------------
+// CALL gds.graph.drop('coPurchase');
+// CALL gds.graph.drop('productBasket');

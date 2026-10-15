@@ -1,0 +1,279 @@
+// ==========================================================================
+// PRT563 Assessment 4 – Danala Group 17 (IMPROVED)
+// Darwin Multi-Store Supermarket Retail – Neo4j Import Scripts
+// Compatible with Neo4j 5.x Desktop / Aura
+// File: import.txt
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// 0. CLEAN SLATE 
+// --------------------------------------------------------------------------
+MATCH (n) DETACH DELETE n;
+
+// --------------------------------------------------------------------------
+// 1. CONSTRAINTS & INDEXES 
+// --------------------------------------------------------------------------
+CREATE CONSTRAINT product_category_id IF NOT EXISTS
+FOR (c:ProductCategory) REQUIRE c.categoryId IS UNIQUE;
+
+CREATE CONSTRAINT product_id IF NOT EXISTS
+FOR (p:Product) REQUIRE p.productId IS UNIQUE;
+
+CREATE CONSTRAINT supplier_id IF NOT EXISTS
+FOR (s:Supplier) REQUIRE s.supplierId IS UNIQUE;
+
+CREATE CONSTRAINT store_id IF NOT EXISTS
+FOR (s:Store) REQUIRE s.storeId IS UNIQUE;
+
+CREATE CONSTRAINT employee_id IF NOT EXISTS
+FOR (e:Employee) REQUIRE e.employeeId IS UNIQUE;
+
+CREATE CONSTRAINT customer_id IF NOT EXISTS
+FOR (c:Customer) REQUIRE c.customerId IS UNIQUE;
+
+CREATE CONSTRAINT purchase_order_id IF NOT EXISTS
+FOR (po:PurchaseOrder) REQUIRE po.purchaseOrderId IS UNIQUE;
+
+CREATE CONSTRAINT sale_id IF NOT EXISTS
+FOR (st:SalesTransaction) REQUIRE st.saleId IS UNIQUE;
+
+CREATE INDEX product_name IF NOT EXISTS FOR (p:Product) ON (p.productName);
+CREATE INDEX store_suburb IF NOT EXISTS FOR (s:Store) ON (s.suburb);
+CREATE INDEX po_status IF NOT EXISTS FOR (po:PurchaseOrder) ON (po.status);
+CREATE INDEX loyalty_tier IF NOT EXISTS FOR (c:LoyaltyMember) ON (c.tierLevel);
+CREATE INDEX sale_datetime IF NOT EXISTS FOR (st:SalesTransaction) ON (st.saleDateTime);
+
+// --------------------------------------------------------------------------
+// 2. PURE CYPHER CREATE 
+// --------------------------------------------------------------------------
+
+// --- ProductCategory ---
+CREATE (:ProductCategory {categoryId: 1, categoryName: 'Groceries'});
+CREATE (:ProductCategory {categoryId: 2, categoryName: 'Fresh Produce'});
+CREATE (:ProductCategory {categoryId: 3, categoryName: 'Fruit'});
+CREATE (:ProductCategory {categoryId: 4, categoryName: 'Vegetables'});
+CREATE (:ProductCategory {categoryId: 5, categoryName: 'Dairy'});
+CREATE (:ProductCategory {categoryId: 6, categoryName: 'Bakery'});
+CREATE (:ProductCategory {categoryId: 7, categoryName: 'Beverages'});
+CREATE (:ProductCategory {categoryId: 8, categoryName: 'Household'});
+CREATE (:ProductCategory {categoryId: 9, categoryName: 'Personal Care'});
+CREATE (:ProductCategory {categoryId: 10, categoryName: 'Frozen'});
+
+// Category hierarchy
+MATCH (c:ProductCategory {categoryId: 3}), (p:ProductCategory {categoryId: 2}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 4}), (p:ProductCategory {categoryId: 2}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 2}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 5}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 6}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 7}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 8}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 9}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+MATCH (c:ProductCategory {categoryId: 10}), (p:ProductCategory {categoryId: 1}) CREATE (c)-[:HAS_PARENT]->(p);
+
+// --- Product  ---
+CREATE (:Product {productId: 1, productName: 'Full Cream Milk 2L', barcode: '9312345000011', unitPrice: 4.50, categoryId: 5});
+CREATE (:Product {productId: 2, productName: 'Bananas (per kg)', barcode: '9312345000028', unitPrice: 3.90, categoryId: 3});
+CREATE (:Product {productId: 3, productName: 'Apples Pink Lady 1kg', barcode: '9312345000035', unitPrice: 4.90, categoryId: 3});
+CREATE (:Product {productId: 4, productName: 'Broccoli (each)', barcode: '9312345000042', unitPrice: 3.10, categoryId: 4});
+CREATE (:Product {productId: 5, productName: 'Carrots 1kg', barcode: '9312345000059', unitPrice: 2.60, categoryId: 4});
+CREATE (:Product {productId: 6, productName: 'Potatoes 2kg', barcode: '9312345000066', unitPrice: 3.80, categoryId: 4});
+CREATE (:Product {productId: 7, productName: 'Avocado (each)', barcode: '9312345000073', unitPrice: 2.40, categoryId: 3});
+CREATE (:Product {productId: 8, productName: 'Mangoes (per kg)', barcode: '9312345000080', unitPrice: 5.50, categoryId: 3});
+CREATE (:Product {productId: 9, productName: 'Free Range Eggs 12pk', barcode: '9312345000097', unitPrice: 6.20, categoryId: 5});
+CREATE (:Product {productId: 10, productName: 'Mineral Water 1.5L', barcode: '9312345000103', unitPrice: 2.20, categoryId: 7});
+CREATE (:Product {productId: 11, productName: 'Toilet Paper 12pk', barcode: '9312345000110', unitPrice: 8.90, categoryId: 8});
+CREATE (:Product {productId: 12, productName: 'Laundry Powder 2kg', barcode: '9312345000127', unitPrice: 12.50, categoryId: 8});
+CREATE (:Product {productId: 13, productName: 'Shampoo 400ml', barcode: '9312345000134', unitPrice: 7.80, categoryId: 9});
+CREATE (:Product {productId: 14, productName: 'Orange Juice 2L', barcode: '9312345000141', unitPrice: 4.20, categoryId: 7});
+CREATE (:Product {productId: 15, productName: 'White Bread Loaf', barcode: '9312345000158', unitPrice: 3.50, categoryId: 6});
+CREATE (:Product {productId: 16, productName: 'Chicken Breast 500g', barcode: '9312345000165', unitPrice: 9.90, categoryId: 10});
+CREATE (:Product {productId: 17, productName: 'Frozen Peas 1kg', barcode: '9312345000172', unitPrice: 3.20, categoryId: 10});
+CREATE (:Product {productId: 18, productName: 'Yoghurt Natural 1kg', barcode: '9312345000189', unitPrice: 5.80, categoryId: 5});
+CREATE (:Product {productId: 19, productName: 'Coffee Instant 200g', barcode: '9312345000196', unitPrice: 11.00, categoryId: 7});
+CREATE (:Product {productId: 20, productName: 'Dishwashing Liquid 500ml', barcode: '9312345000202', unitPrice: 3.40, categoryId: 8});
+CREATE (:Product {productId: 21, productName: 'Toothpaste 110g', barcode: '9312345000219', unitPrice: 4.10, categoryId: 9});
+CREATE (:Product {productId: 22, productName: 'Butter 250g', barcode: '9312345000226', unitPrice: 4.80, categoryId: 5});
+
+// Link products to categories
+MATCH (p:Product), (c:ProductCategory) WHERE p.categoryId = c.categoryId CREATE (p)-[:IN_CATEGORY]->(c);
+
+// --- Store ---
+CREATE (:Store {storeId: 1, storeName: 'Coles Casuarina', suburb: 'Casuarina', address: 'Casuarina Square, 247 Trower Rd', phone: '08 8920 1100'});
+CREATE (:Store {storeId: 2, storeName: 'Woolworths Palmerston', suburb: 'Palmerston', address: 'Palmerston Shopping Centre', phone: '08 8932 2200'});
+CREATE (:Store {storeId: 3, storeName: 'Coles Nightcliff', suburb: 'Nightcliff', address: 'Nightcliff Shopping Centre', phone: '08 8948 3300'});
+
+// --- Supplier ---
+CREATE (:Supplier {supplierId: 1, supplierName: 'NT Fresh Distributors', contactName: 'Sarah Nguyen', phone: '08 8941 2200', email: 'sarah@ntfresh.com.au', address: '15 Berrimah Rd, Darwin'});
+CREATE (:Supplier {supplierId: 2, supplierName: 'Top End Dairy Co', contactName: 'James Wu', phone: '08 8987 1100', email: 'james@topenddairy.com.au', address: '42 Stuart Hwy, Darwin'});
+CREATE (:Supplier {supplierId: 3, supplierName: 'National Grocery Supply', contactName: 'Priya Patel', phone: '08 8922 5500', email: 'priya@natsupply.com.au', address: '8 Wishart Rd, Darwin'});
+CREATE (:Supplier {supplierId: 4, supplierName: 'Aussie Household Essentials', contactName: 'Mark Thompson', phone: '08 8935 4400', email: 'mark@ahe.com.au', address: '21 McKinnon Rd, Darwin'});
+CREATE (:Supplier {supplierId: 5, supplierName: 'Tropical Fruit Traders', contactName: 'Lina Rossi', phone: '08 8948 7700', email: 'lina@tft.com.au', address: '3 Parap Rd, Darwin'});
+
+// --- Employee (with specialisation labels) ---
+CREATE (:Employee:Cashier {employeeId: 1, firstName: 'Aisha', lastName: 'Rahman', hireDate: date('2023-03-15'), storeId: 1, registerNumber: 3});
+CREATE (:Employee:StockClerk {employeeId: 2, firstName: 'Ben', lastName: 'Okafor', hireDate: date('2023-06-01'), storeId: 1, assignedSection: 'Fresh Produce'});
+CREATE (:Employee:Cashier {employeeId: 3, firstName: 'Chloe', lastName: 'Nguyen', hireDate: date('2024-01-10'), storeId: 2, registerNumber: 1});
+CREATE (:Employee:Manager {employeeId: 4, firstName: 'David', lastName: 'Singh', hireDate: date('2022-08-20'), storeId: 1, managementLevel: 'Store'});
+CREATE (:Employee:Cashier {employeeId: 5, firstName: 'Emma', lastName: 'Wilson', hireDate: date('2023-11-05'), storeId: 3, registerNumber: 2});
+CREATE (:Employee:StockClerk {employeeId: 6, firstName: 'Farid', lastName: 'Hassan', hireDate: date('2024-02-15'), storeId: 2, assignedSection: 'Dairy'});
+CREATE (:Employee:Manager {employeeId: 7, firstName: 'Grace', lastName: 'Lee', hireDate: date('2021-04-12'), storeId: 2, managementLevel: 'Store'});
+CREATE (:Employee:Cashier {employeeId: 8, firstName: 'Harry', lastName: 'Brown', hireDate: date('2023-09-18'), storeId: 3, registerNumber: 1});
+CREATE (:Employee:StockClerk {employeeId: 9, firstName: 'Isla', lastName: 'Martinez', hireDate: date('2024-03-01'), storeId: 3, assignedSection: 'Household'});
+CREATE (:Employee:Manager {employeeId: 10, firstName: 'Jack', lastName: 'Taylor', hireDate: date('2022-11-30'), storeId: 3, managementLevel: 'Area'});
+
+// Link employees to stores
+MATCH (e:Employee), (s:Store) WHERE e.storeId = s.storeId CREATE (s)-[:EMPLOYS]->(e);
+
+// --- Customer + LoyaltyMember ---
+CREATE (:Customer:LoyaltyMember {customerId: 1, firstName: 'Liam', lastName: 'Foster', email: 'liam.foster@email.com', phone: '0412 345 678', joinDate: date('2023-05-10'), pointsBalance: 1250, tierLevel: 'Gold', enrolmentDate: date('2023-05-10')});
+CREATE (:Customer:LoyaltyMember {customerId: 2, firstName: 'Olivia', lastName: 'Nguyen', email: 'olivia.n@email.com', phone: '0423 456 789', joinDate: date('2023-07-22'), pointsBalance: 2100, tierLevel: 'Gold', enrolmentDate: date('2023-07-22')});
+CREATE (:Customer:LoyaltyMember {customerId: 3, firstName: 'Noah', lastName: 'Patel', email: 'noah.p@email.com', phone: '0434 567 890', joinDate: date('2024-01-15'), pointsBalance: 890, tierLevel: 'Silver', enrolmentDate: date('2024-01-15')});
+CREATE (:Customer:LoyaltyMember {customerId: 4, firstName: 'Ava', lastName: 'Williams', email: 'ava.w@email.com', phone: '0445 678 901', joinDate: date('2024-02-28'), pointsBalance: 650, tierLevel: 'Silver', enrolmentDate: date('2024-02-28')});
+CREATE (:Customer:LoyaltyMember {customerId: 5, firstName: 'Mia', lastName: 'Chen', email: 'mia.c@email.com', phone: '0456 789 012', joinDate: date('2024-04-10'), pointsBalance: 420, tierLevel: 'Bronze', enrolmentDate: date('2024-04-10')});
+CREATE (:Customer:LoyaltyMember {customerId: 6, firstName: 'Sophia', lastName: 'Martin', email: 'sophia.m@email.com', phone: '0467 890 123', joinDate: date('2024-05-05'), pointsBalance: 180, tierLevel: 'Bronze', enrolmentDate: date('2024-05-05')});
+CREATE (:Customer {customerId: 7, firstName: 'Ethan', lastName: 'Garcia', email: 'ethan.g@email.com', phone: '0478 901 234', joinDate: date('2024-06-12')});
+CREATE (:Customer {customerId: 8, firstName: 'Isabella', lastName: 'Kim', email: 'isabella.k@email.com', phone: '0489 012 345', joinDate: date('2024-07-01')});
+CREATE (:Customer:LoyaltyMember {customerId: 9, firstName: 'Lucas', lastName: 'Ahmed', email: 'lucas.a@email.com', phone: '0490 123 456', joinDate: date('2023-12-01'), pointsBalance: 780, tierLevel: 'Silver', enrolmentDate: date('2023-12-01')});
+CREATE (:Customer {customerId: 10, firstName: 'Amelia', lastName: 'Roberts', email: 'amelia.r@email.com', phone: '0401 234 567', joinDate: date('2024-08-15')});
+
+// --- PurchaseOrder + CONTAINS ---
+CREATE (:PurchaseOrder {purchaseOrderId: 1, orderDate: date('2026-08-01'), expectedDeliveryDate: date('2026-08-05'), status: 'Received', supplierId: 1, storeId: 1});
+CREATE (:PurchaseOrder {purchaseOrderId: 2, orderDate: date('2026-08-03'), expectedDeliveryDate: date('2026-08-07'), status: 'Received', supplierId: 2, storeId: 1});
+CREATE (:PurchaseOrder {purchaseOrderId: 3, orderDate: date('2026-08-05'), expectedDeliveryDate: date('2026-08-10'), status: 'Received', supplierId: 1, storeId: 2});
+CREATE (:PurchaseOrder {purchaseOrderId: 4, orderDate: date('2026-08-08'), expectedDeliveryDate: date('2026-08-12'), status: 'Pending', supplierId: 3, storeId: 3});
+CREATE (:PurchaseOrder {purchaseOrderId: 5, orderDate: date('2026-08-10'), expectedDeliveryDate: date('2026-08-14'), status: 'Received', supplierId: 5, storeId: 1});
+CREATE (:PurchaseOrder {purchaseOrderId: 6, orderDate: date('2026-08-12'), expectedDeliveryDate: date('2026-08-16'), status: 'Received', supplierId: 4, storeId: 2});
+CREATE (:PurchaseOrder {purchaseOrderId: 7, orderDate: date('2026-08-15'), expectedDeliveryDate: date('2026-08-20'), status: 'Pending', supplierId: 1, storeId: 3});
+CREATE (:PurchaseOrder {purchaseOrderId: 8, orderDate: date('2026-08-18'), expectedDeliveryDate: date('2026-08-22'), status: 'Received', supplierId: 2, storeId: 2});
+
+// Link POs
+MATCH (po:PurchaseOrder), (s:Supplier) WHERE po.supplierId = s.supplierId CREATE (po)-[:SUPPLIED_BY]->(s);
+MATCH (po:PurchaseOrder), (st:Store) WHERE po.storeId = st.storeId CREATE (st)-[:PLACES_ORDER]->(po);
+
+// Order lines (CONTAINS)
+MATCH (po:PurchaseOrder {purchaseOrderId: 1}), (p:Product {productId: 2}) CREATE (po)-[:CONTAINS {quantityOrdered: 150, unitCost: 2.10}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 1}), (p:Product {productId: 8}) CREATE (po)-[:CONTAINS {quantityOrdered: 80, unitCost: 3.20}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 1}), (p:Product {productId: 7}) CREATE (po)-[:CONTAINS {quantityOrdered: 100, unitCost: 1.50}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 2}), (p:Product {productId: 1}) CREATE (po)-[:CONTAINS {quantityOrdered: 200, unitCost: 3.20}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 2}), (p:Product {productId: 9}) CREATE (po)-[:CONTAINS {quantityOrdered: 120, unitCost: 4.50}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 3}), (p:Product {productId: 2}) CREATE (po)-[:CONTAINS {quantityOrdered: 100, unitCost: 2.10}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 3}), (p:Product {productId: 3}) CREATE (po)-[:CONTAINS {quantityOrdered: 90, unitCost: 3.40}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 5}), (p:Product {productId: 2}) CREATE (po)-[:CONTAINS {quantityOrdered: 180, unitCost: 2.05}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 5}), (p:Product {productId: 8}) CREATE (po)-[:CONTAINS {quantityOrdered: 70, unitCost: 3.10}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 6}), (p:Product {productId: 11}) CREATE (po)-[:CONTAINS {quantityOrdered: 60, unitCost: 6.20}]->(p);
+MATCH (po:PurchaseOrder {purchaseOrderId: 6}), (p:Product {productId: 12}) CREATE (po)-[:CONTAINS {quantityOrdered: 40, unitCost: 8.50}]->(p);
+
+// --- Inventory (HOLDS relationship) ---
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 1}) CREATE (s)-[:HOLDS {quantityOnHand: 45, reorderLevel: 20, lastRestockDate: date('2026-08-05')}]->(p);
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 2}) CREATE (s)-[:HOLDS {quantityOnHand: 12, reorderLevel: 25, lastRestockDate: date('2026-08-06')}]->(p);
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 7}) CREATE (s)-[:HOLDS {quantityOnHand: 8, reorderLevel: 15, lastRestockDate: date('2026-08-04')}]->(p);
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 8}) CREATE (s)-[:HOLDS {quantityOnHand: 6, reorderLevel: 12, lastRestockDate: date('2026-08-05')}]->(p);
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 12}) CREATE (s)-[:HOLDS {quantityOnHand: 8, reorderLevel: 10, lastRestockDate: date('2026-07-28')}]->(p);
+MATCH (s:Store {storeId: 2}), (p:Product {productId: 2}) CREATE (s)-[:HOLDS {quantityOnHand: 18, reorderLevel: 20, lastRestockDate: date('2026-08-07')}]->(p);
+MATCH (s:Store {storeId: 2}), (p:Product {productId: 1}) CREATE (s)-[:HOLDS {quantityOnHand: 30, reorderLevel: 15, lastRestockDate: date('2026-08-08')}]->(p);
+MATCH (s:Store {storeId: 2}), (p:Product {productId: 11}) CREATE (s)-[:HOLDS {quantityOnHand: 22, reorderLevel: 10, lastRestockDate: date('2026-08-09')}]->(p);
+MATCH (s:Store {storeId: 3}), (p:Product {productId: 2}) CREATE (s)-[:HOLDS {quantityOnHand: 9, reorderLevel: 15, lastRestockDate: date('2026-08-03')}]->(p);
+MATCH (s:Store {storeId: 3}), (p:Product {productId: 4}) CREATE (s)-[:HOLDS {quantityOnHand: 14, reorderLevel: 10, lastRestockDate: date('2026-08-06')}]->(p);
+MATCH (s:Store {storeId: 3}), (p:Product {productId: 5}) CREATE (s)-[:HOLDS {quantityOnHand: 20, reorderLevel: 12, lastRestockDate: date('2026-08-07')}]->(p);
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 3}) CREATE (s)-[:HOLDS {quantityOnHand: 25, reorderLevel: 15, lastRestockDate: date('2026-08-05')}]->(p);
+MATCH (s:Store {storeId: 1}), (p:Product {productId: 4}) CREATE (s)-[:HOLDS {quantityOnHand: 18, reorderLevel: 10, lastRestockDate: date('2026-08-06')}]->(p);
+MATCH (s:Store {storeId: 2}), (p:Product {productId: 9}) CREATE (s)-[:HOLDS {quantityOnHand: 40, reorderLevel: 20, lastRestockDate: date('2026-08-08')}]->(p);
+MATCH (s:Store {storeId: 3}), (p:Product {productId: 10}) CREATE (s)-[:HOLDS {quantityOnHand: 55, reorderLevel: 25, lastRestockDate: date('2026-08-09')}]->(p);
+
+// --- SalesTransaction + relationships ---
+CREATE (:SalesTransaction {saleId: 1, saleDateTime: datetime('2026-08-20T10:15:00'), paymentMethod: 'Card', storeId: 1, employeeId: 1, customerId: 1});
+CREATE (:SalesTransaction {saleId: 2, saleDateTime: datetime('2026-08-20T11:30:00'), paymentMethod: 'Cash', storeId: 1, employeeId: 1, customerId: 3});
+CREATE (:SalesTransaction {saleId: 3, saleDateTime: datetime('2026-08-21T09:45:00'), paymentMethod: 'Card', storeId: 2, employeeId: 3, customerId: 2});
+CREATE (:SalesTransaction {saleId: 4, saleDateTime: datetime('2026-08-21T14:20:00'), paymentMethod: 'Card', storeId: 1, employeeId: 1, customerId: 4});
+CREATE (:SalesTransaction {saleId: 5, saleDateTime: datetime('2026-08-22T10:00:00'), paymentMethod: 'Cash', storeId: 3, employeeId: 5, customerId: 5});
+CREATE (:SalesTransaction {saleId: 6, saleDateTime: datetime('2026-08-22T16:45:00'), paymentMethod: 'Card', storeId: 2, employeeId: 3, customerId: 6});
+CREATE (:SalesTransaction {saleId: 7, saleDateTime: datetime('2026-08-23T11:10:00'), paymentMethod: 'Card', storeId: 1, employeeId: 1, customerId: 1});
+CREATE (:SalesTransaction {saleId: 8, saleDateTime: datetime('2026-08-23T13:30:00'), paymentMethod: 'Cash', storeId: 3, employeeId: 8, customerId: 9});
+CREATE (:SalesTransaction {saleId: 9, saleDateTime: datetime('2026-08-24T09:20:00'), paymentMethod: 'Card', storeId: 2, employeeId: 3, customerId: 2});
+CREATE (:SalesTransaction {saleId: 10, saleDateTime: datetime('2026-08-24T15:00:00'), paymentMethod: 'Card', storeId: 1, employeeId: 1, customerId: 3});
+CREATE (:SalesTransaction {saleId: 11, saleDateTime: datetime('2026-08-25T10:40:00'), paymentMethod: 'Cash', storeId: 3, employeeId: 5, customerId: null});
+CREATE (:SalesTransaction {saleId: 12, saleDateTime: datetime('2026-08-25T12:15:00'), paymentMethod: 'Card', storeId: 1, employeeId: 1, customerId: 4});
+CREATE (:SalesTransaction {saleId: 13, saleDateTime: datetime('2026-08-26T11:00:00'), paymentMethod: 'Card', storeId: 2, employeeId: 3, customerId: 7});
+CREATE (:SalesTransaction {saleId: 14, saleDateTime: datetime('2026-08-26T14:50:00'), paymentMethod: 'Cash', storeId: 1, employeeId: 1, customerId: 5});
+CREATE (:SalesTransaction {saleId: 15, saleDateTime: datetime('2026-08-27T09:30:00'), paymentMethod: 'Card', storeId: 3, employeeId: 8, customerId: 8});
+CREATE (:SalesTransaction {saleId: 16, saleDateTime: datetime('2026-08-27T16:20:00'), paymentMethod: 'Card', storeId: 2, employeeId: 3, customerId: 1});
+CREATE (:SalesTransaction {saleId: 17, saleDateTime: datetime('2026-08-28T10:10:00'), paymentMethod: 'Cash', storeId: 1, employeeId: 1, customerId: 6});
+CREATE (:SalesTransaction {saleId: 18, saleDateTime: datetime('2026-08-28T13:40:00'), paymentMethod: 'Card', storeId: 3, employeeId: 5, customerId: 9});
+
+// Link sales
+MATCH (st:SalesTransaction), (s:Store) WHERE st.storeId = s.storeId CREATE (st)-[:MADE_AT]->(s);
+MATCH (st:SalesTransaction), (e:Employee) WHERE st.employeeId = e.employeeId CREATE (e)-[:PROCESSED]->(st);
+MATCH (st:SalesTransaction), (c:Customer) WHERE st.customerId = c.customerId CREATE (st)-[:PURCHASED_BY]->(c);
+
+// Sale lines (INCLUDES) – create realistic co-purchase patterns
+MATCH (st:SalesTransaction {saleId: 1}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 1}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1.5, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 1}), (p:Product {productId: 15}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.50}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 2}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 2}), (p:Product {productId: 4}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.10}]->(p);
+MATCH (st:SalesTransaction {saleId: 2}), (p:Product {productId: 10}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 2.20}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 3}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 3}), (p:Product {productId: 9}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 6.20}]->(p);
+MATCH (st:SalesTransaction {saleId: 3}), (p:Product {productId: 11}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 8.90}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 4}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 4}), (p:Product {productId: 3}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 4}), (p:Product {productId: 7}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 2.40}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 5}), (p:Product {productId: 5}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 2.60}]->(p);
+MATCH (st:SalesTransaction {saleId: 5}), (p:Product {productId: 6}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.80}]->(p);
+MATCH (st:SalesTransaction {saleId: 5}), (p:Product {productId: 10}) CREATE (st)-[:INCLUDES {quantitySold: 3, unitPriceAtSale: 2.20}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 6}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 6}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 6}), (p:Product {productId: 14}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.20}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 7}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 7}), (p:Product {productId: 11}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 8.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 7}), (p:Product {productId: 15}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 3.50}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 8}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1.2, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 8}), (p:Product {productId: 8}) CREATE (st)-[:INCLUDES {quantitySold: 0.8, unitPriceAtSale: 5.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 8}), (p:Product {productId: 10}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 2.20}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 9}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 3, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 9}), (p:Product {productId: 9}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 6.20}]->(p);
+MATCH (st:SalesTransaction {saleId: 9}), (p:Product {productId: 22}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.80}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 10}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 10}), (p:Product {productId: 3}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 10}), (p:Product {productId: 4}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.10}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 12}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 12}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 12}), (p:Product {productId: 11}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 8.90}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 14}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1.5, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 14}), (p:Product {productId: 5}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 2.60}]->(p);
+MATCH (st:SalesTransaction {saleId: 14}), (p:Product {productId: 10}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 2.20}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 16}), (p:Product {productId: 1}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 4.50}]->(p);
+MATCH (st:SalesTransaction {saleId: 16}), (p:Product {productId: 2}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 3.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 16}), (p:Product {productId: 9}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 6.20}]->(p);
+
+MATCH (st:SalesTransaction {saleId: 17}), (p:Product {productId: 3}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.90}]->(p);
+MATCH (st:SalesTransaction {saleId: 17}), (p:Product {productId: 7}) CREATE (st)-[:INCLUDES {quantitySold: 2, unitPriceAtSale: 2.40}]->(p);
+MATCH (st:SalesTransaction {saleId: 17}), (p:Product {productId: 14}) CREATE (st)-[:INCLUDES {quantitySold: 1, unitPriceAtSale: 4.20}]->(p);
+
+// --------------------------------------------------------------------------
+// 3. MATERIALISE CO-PURCHASE RELATIONSHIPS 
+// --------------------------------------------------------------------------
+MATCH (p1:Product)<-[:INCLUDES]-(st:SalesTransaction)-[:INCLUDES]->(p2:Product)
+WHERE id(p1) < id(p2)
+WITH p1, p2, count(st) AS weight
+MERGE (p1)-[r:CO_PURCHASED]->(p2)
+SET r.weight = weight;
+
+// --------------------------------------------------------------------------
+// 4. VERIFICATION
+// --------------------------------------------------------------------------
+MATCH (n) RETURN labels(n) AS label, count(*) AS cnt ORDER BY cnt DESC;
+MATCH ()-[r]->() RETURN type(r) AS relType, count(*) AS cnt ORDER BY cnt DESC;
+MATCH (p1)-[r:CO_PURCHASED]->(p2) RETURN p1.productName, p2.productName, r.weight ORDER BY r.weight DESC LIMIT 10;

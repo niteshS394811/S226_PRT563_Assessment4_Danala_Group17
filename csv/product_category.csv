@@ -1,0 +1,11 @@
+categoryId,categoryName,parentCategoryId
+1,Groceries,
+2,Fresh Produce,1
+3,Fruit,2
+4,Vegetables,2
+5,Dairy & Eggs,1
+6,Bakery,1
+7,Beverages,1
+8,Household,
+9,Cleaning,8
+10,Personal Care,8
